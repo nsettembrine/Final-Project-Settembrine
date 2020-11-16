@@ -1,0 +1,116 @@
+---
+title: "Written Analysis"
+author: "Nick Settembrine"
+date: "12/2/2020"
+output:
+    html_document:
+        code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+covidData <- read.csv("COVID19_data.csv")
+```
+
+```{r data}
+cases_by_race <- select(covidData, CasesTotal, CasesLatinx, CasesAsianNonLatinx, CasesBlackNonLatinx, CasesWhiteNonLatinx, CasesOtherRaceNonLatinx)
+deaths_by_race <- select(covidData, DeathsTotal, DeathsLatinx, DeathsAsianNonLatinx, DeathsBlackNonLatinx, DeathsWhiteNonLatinx, DeathsOtherRaceNonLatinx)
+hospitalizations_by_race <- select(covidData, HospitalizationsTotal, HospitalizationsLatinx, HospitalizationsAsianNonLatinx, HospitalizationsBlackNonLatinx, HospitalizationsWhiteNonLatinx, HospitalizationsOtherRaceNonLatinx)
+march <- filter(covidData, Month == 3)
+april <- filter(covidData, Month == 4)
+may <- filter(covidData, Month == 5)
+june <- filter(covidData, Month == 6)
+july <- filter(covidData, Month == 7)
+august <- filter(covidData, Month == 8)
+september <- filter(covidData, Month == 9)
+covidData <- mutate(covidData, proportionWhite = CasesWhiteNonLatinx/2693976)
+covidData <- mutate(covidData, proportionBlack = CasesBlackNonLatinx/2693976)
+covidData <- mutate(covidData, proportionLatinx = CasesLatinx/2693976)
+april <- mutate(april, white_death_proportion_of_hosp = DeathsWhiteNonLatinx/HospitalizationsWhiteNonLatinx)
+april <- mutate(april, black_death_proportion_of_hosp = DeathsBlackNonLatinx/HospitalizationsBlackNonLatinx)
+april <- mutate(april, latinx_death_proportion_of_hosp = DeathsLatinx/HospitalizationsLatinx)
+```
+
+# Introduction
+
+According to the U.S. Census Bureau, the population of Chicago in July of 2019 was 2,693,976. Of this 2.7 million, 32.8% were white, 30.1% were Black, 6.4% were Asian, and 29% were Hispanic or Latinx. Are the cases, deaths, and hospitalizations due to COVID-19 equal or roughly equal to those proportions when broken down by race? How has COVID-19 impacted these different communities, and more importantly, what are some reasons for this discrepancy? Minorities and those with low incomes did not have the same opportunity to work from home during the pandemic. The jobs they often worked required them to be in person and potentially come in contact with the virus. According to the U.S. Bureau of Labor Statistics, less than one in five black workers and one out of six Latino workers have the luxury of working from home. It is easy to see how Black and Latinx communities may be more affected by the virus.
+  
+The main data set that I will be working with is titled “COVID-19 Daily Cases, Deaths, and Hospitalizations.” It was published by the City of Chicago, most likely in order to make things more transparent to the public. It contains data from every single day of the pandemic starting on March 1, 2020 up until September 28, 2020. It includes total cases, deaths, and hospitalizations per day. This data set also breaks up these larger categories into smaller components, such as age groups, gender, and race. It can be found at https://healthdata.gov/dataset/covid-19-daily-cases-deaths-and-hospitalizations
+
+# Ethical Considerations
+
+Dealing with medical data can bring up a variety of concerns. For the specific data set that I worked with, there were just raw numbers provided - not any names of patients. Even though there weren't any specific personal identifiers, if you knew a Latinx male between the ages of 30 and 39 who was sick with COVID-like symptoms in the beginning of May, then you could identify them as one of the cases in the data set. While this seems dramatic because not many people will go through the work of breaking down cases into race, age, and date all at the same time, it is still a possibility that can lead to subjects being identified.
+
+# Data Explanation and Exploration
+
+The key variables that I will be focusing on within my data set are cases, deaths, and hospitalizations for White, Black, and Latinx Chicagoans. I am focusing on these three groups because they make up over 90% of the population of Chicago. One thing that I had to make sure of was that I was being conscious of proportions. Using just the number of cases would sometimes not be helpful because the three groups do not have exactly equal representation. While generalizations can be made because the proportions are close, it is important to be exact and not to assume anything.
+
+```{r boxplots}
+ggplot(april, aes(x = DeathsWhiteNonLatinx)) + geom_boxplot(color = "dark red") + labs(title = "Box Plot of COVID-19 Deaths in White Chicagoans in April 2020", x = "White Deaths Due to COVID-19") + xlim(0,30)
+ggplot(april, aes(x = DeathsBlackNonLatinx)) + geom_boxplot(color = "dark blue")  + labs(title = "Box Plot of COVID-19 Deaths in Black Chicagoans in April 2020", x = "Black Deaths Due to COVID-19") + xlim(0,30)
+ggplot(april, aes(x = DeathsLatinx)) + geom_boxplot(color = "dark green") + labs(title = "Box Plot of COVID-19 Deaths in Latinx Chicagoans in April 2020", x = "Black Deaths Due to COVID-19") + xlim(0,30)
+median(april$DeathsWhiteNonLatinx) # median of White deaths
+median(april$DeathsBlackNonLatinx) # median of Black deaths
+median(april$DeathsLatinx) # median of Latinx deaths
+```
+The box plots of deaths per day due to COVID-19 in April 2020 among White, Black, and Latinx Chicagoans shows different trends between the groups. White people had the lowest range of values. I chose April because this is when the virus hit its peak in most parts of the United States. Their median was 5. Black people had a much higher distribution of deaths with their median being 18. Latinx people had more similarities to White people, having a median of 8 deaths per day. Once again, since the proportion of White, Black, and Latinx people in Chicago are all approximately 30%, there is something at play which is causing such drastic differences. The number of Black people that died per day was significantly higher than the other groups, which raises the question of what has caused this to happen. But what happens if compare deaths as a percentage of hospitalizations? The next three box plots show what happens when we take this into account.
+
+```{r boxplots 2}
+ggplot(april, aes(x = white_death_proportion_of_hosp)) + geom_boxplot(color = "dark red") + labs(title = "Box Plot of COVID-19 Deaths in White Chicagoans in April 2020 \nAs A Percentage of Hospitalizations", x = "Percentage") + xlim(0,1)
+ggplot(april, aes(x = black_death_proportion_of_hosp)) + geom_boxplot(color = "dark blue")  + labs(title = "Box Plot of COVID-19 Deaths in Black Chicagoans in April 2020 \nAs A Percentage of Hospitalizations", x = "Percentage") + xlim(0,1)
+ggplot(april, aes(x = latinx_death_proportion_of_hosp)) + geom_boxplot(color = "dark green") + labs(title = "Box Plot of COVID-19 Deaths in Latinx Chicagoans in April 2020 \nAs A Percentage of Hospitalizations", x = "Percentage") + xlim(0,1)
+median(april$white_death_proportion_of_hosp)
+median(april$black_death_proportion_of_hosp)
+median(april$latinx_death_proportion_of_hosp)
+```
+When we take deaths as a percentage of the number of hospitalizations, things start to change. The box plots become a lot more similar than before. White and Black deaths had very similar medians, .22 and .24, respectively. The median for Latinx was slightly lower at 0.17. The median for White people is actually higher than Latinx people when we take this into account. Before, it was the opposite. This is why it is important to look at things as percentages and proportions, not just the raw numbers, because it can reveal things that would not have been evident before. This shows that the distribution is more proportional to the population because Black and White people represent about just over 30% of Chicago each, while Latinx people make up a little less than 30%.
+
+# Statistical Analysis and Interpretation
+
+```{r t test}
+t.test(covidData$proportionLatinx, covidData$proportionWhite)
+```
+I used a t-test to determine if there is a difference in the mean proportion of the population of Latinx and White people in Chicago that tested positive for COVID-19. The resulting p-value was less than 2.2e-16, basically 0. This means that the null hypothesis can be rejected. The null hypothesis stated that the true difference in the means would be equal to 0. We can now say that due to the results of the t-test, there is a difference the mean proportion of the population of Latinx and White people in Chicago that tested positive for COVID-19.
+
+```{r t test 2}
+t.test(april$black_death_proportion_of_hosp, april$white_death_proportion_of_hosp)
+```
+I used another t-test to determine if there is a difference in the mean number of the deaths as a percentage of hospitalizations for White and Black people in Chicago. I am focusing on these two groups because the box plots from above show that their distributions are very similar, but it is impossible to tell just by looking at them. The resulting p-value was .3245. This is very high. Because it is so high, we fail to reject the null hypothesis which stated that there is no true difference in the mean number of deaths as a percentage of hospitalizations for White and Black people in Chicago. This confirms what the box plots showed - White and Black people were affected roughly the same when it comes to deaths due to COVID.
+
+```{r multivariate regression}
+ggpairs(covidData, columns=c('proportionWhite', 'proportionBlack', 'proportionLatinx'))
+```
+Using ggpairs, the correlation between the number of cases for different groups can be seen. Black people and White people had a positive correlation coefficient of .746, which is fairly strong. This means that as the number of cases for White people increases, so does the number of cases for Black people. The same can be said for any of the two groups being compared. The scatter plots show steep slopes which means that as the number of cases for one group increases, the other group increases more dramatically. The x-axis appears to be cases for White people, as the range of values is much smaller than the y-axis. This shows once again that the minority groups are being infected at much higher rates.
+
+```{r histograms}
+ggplot(cases_by_race, aes(x = CasesWhiteNonLatinx)) + xlim(0,400) + ylim(0, 40) + geom_histogram(bins = 50, fill = "dark red") + labs(title = "Histogram of COVID-19 Cases \nfor White Chicagoans", x = "Number of Cases")
+ggplot(cases_by_race, aes(x = CasesBlackNonLatinx)) + xlim(0,400) + ylim(0, 40) + geom_histogram(bins = 50, fill = "dark blue") +labs(title = "Histogram of COVID-19 Cases \nfor Black Chicagoans", x = "Number of Cases")
+ggplot(cases_by_race, aes(x = CasesLatinx)) + xlim(0,400) + ylim(0, 40) + geom_histogram(bins = 50, fill = "dark green") +labs(title = "Histogram of COVID-19 Cases \nfor Latinx Chicagoans", x = "Number of Cases")
+mean(covidData$CasesWhiteNonLatinx) # mean of White cases
+mean(covidData$CasesBlackNonLatinx) # mean of Black cases
+mean(covidData$CasesLatinx) # mean of Latinx cases
+```
+The distribution of COVID-19 cases between White, Black, and Latinx Chicagoans are clearly different. The number of new cases per day rarely exceeded 100 for White people, while frequently reaching over 200 for Black people, and frequently going over 300 for Latinx people. The mean number of new cases per day for White people is 54.35, 82.68 for Black people, and 146.48 for Latinx people. The number of new Latinx cases per day is almost triple that of White people and double that of Black people. Since the population of both Black and White people in Chicago is roughly 30% each, the virus is not impacting these three groups the same.
+
+```{r scatter plots}
+ggplot(covidData, aes(x = Date, y = proportionWhite)) + geom_point(color = "dark red") + ylim(0,.00020) + labs(title = "COVID-19 Cases in White Chicagoans by Date - Proportional \nto Population", y = "Proportion of Population")
+ggplot(covidData, aes(x = Date, y = proportionBlack)) + geom_point(color = "dark blue") + ylim(0,.00020) + labs(title = "COVID-19 Cases in Black Chicagoans by Date - Proportional \nto Population", y = "Proportion of Population")
+ggplot(covidData, aes(x = Date, y = proportionLatinx)) + geom_point(color = "dark green") + ylim(0,.00020) + labs(title = "COVID-19 Cases in Latinx Chicagoans by Date - Proportional \nto Population", y = "Proportion of Population")
+```
+
+
+# Conclusion
+
+After running statistical tests and looking at different graphics from my data, a few conclusions can be made. First, it is safe to say that overall cases due to COVID-19 impacted Black and Latinx communities at much greater rates than White communities, This can be seen through the scatter plots, histograms, and ggpairs visuals. Another conclusion can be drawn from looking at the box plot of deaths as a percentage of hospitalizations and the second t-test. This showed that race was not a factor in this case - the numbers were the same. 
+
+However you choose to look at it, the data did prove that race did play a part in some aspects. It was not the only factor, though. The compounding effects of race, economic status, and age are what makes up a much larger picture of your likelihood of contracting COVID. Perhaps there is a larger proportion of elderly Black people in Chicago. In that case, age may have been what put the numbers for Black people above White people. According to Matthew A. Raifman, author of "Disparities in the Population at Risk of Severe Illness From COVID-19 by Race/Ethnicity and Income," "Minorities and people living in low-income households are more likely to work in industries that have remained open during nonessential business closures. They are also more likely to live in crowded conditions and multigenerational households that may elevate exposure and limit options for quarantining family members." Now, attention must be turned to how we can make it so that this does not happen. Your ability to avoid a virus should not be partially dependent on the color of your skin or your economic status. A full lockdown back in March might have prevented this. It would have kept all families home on paid leave, not just those who had the privilege of being able to work from home.
+
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7183932/
+
+### Works Cited
+Raifman, Matthew A, and Julia R Raifman. “Disparities in the Population at Risk of Severe Illness From COVID-19 by Race/Ethnicity and Income.” American journal of preventive medicine vol. 59,1 (2020): 137-139. doi:10.1016/j.amepre.2020.04.003
+
+# Reflections
